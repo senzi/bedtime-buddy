@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>早睡打卡</title>
+    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.9/index.global.min.js'></script>
+    <link href="/static/css/style.css" rel="stylesheet">
+</head>
+<body>
+    <div id="notification" class="notification" style="display: none;"></div>
+    <div id="confirm-modal" class="modal">
+        <div class="modal-content">
+            <h3>更新打卡确认</h3>
+            <p id="confirm-message"></p>
+            <div class="modal-buttons">
+                <button id="confirm-yes" class="btn-primary">确认更新</button>
+                <button id="confirm-no" class="btn-secondary">取消</button>
+            </div>
+        </div>
+    </div>
+    <div class="container">
+        <h1><span id="username" contenteditable="true">点击输入姓名</span>的早睡打卡</h1>
+        <p id="streak-info">早睡第 0 天</p>
+        <div id="current-time"></div>
+        <div id="calendar"></div>
+        <button id="checkin-btn">我要睡了</button>
+        <div class="streaks-section">
+            <h2>连续早睡榜</h2>
+            <div id="all-streaks"></div>
+        </div>
+        <div class="records-section">
+            <h2>打卡记录</h2>
+            <div id="checkin-records"></div>
+        </div>
+    </div>
+    <script src="/static/js/main.js"></script>
+</body>
+</html>
