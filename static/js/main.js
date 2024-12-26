@@ -25,10 +25,17 @@ document.addEventListener('DOMContentLoaded', function () {
     const calendar = new FullCalendar.Calendar(calendarEl, {
         initialView: 'dayGridMonth',
         locale: 'zh-cn',
+        firstDay: 1,  // Start with Monday
         headerToolbar: {
             left: 'prev,next today',
             center: 'title',
-            right: 'dayGridMonth'
+            right: ''  
+        },
+        dayCellDidMount: function(arg) {
+            // Add light red background for weekends
+            if (arg.date.getDay() === 0 || arg.date.getDay() === 6) {
+                arg.el.style.backgroundColor = '#ffebee';
+            }
         }
     });
     calendar.render();
