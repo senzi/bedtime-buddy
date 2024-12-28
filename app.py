@@ -333,6 +333,61 @@ def save_user_mapping():
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
 
+@app.route('/makeup_checkin', methods=['POST'])
+def makeup_checkin():
+    data = request.get_json()
+    username = data.get('username')
+    check_date = data.get('date')
+    check_time = data.get('time')
+    
+    # 检查是否是"点击输入"用户名
+    if username == '点击输入姓名':
+        return jsonify({
+            'success': False,
+            'message': '请先输入用户名！'
+        })
+    
+    # 解析日期和时间
+    try:
+        dt = datetime.strptime(f"{check_date} {check_time}", "%Y-%m-%d %H:%M")
+    except ValueError:
+        return jsonify({
+            'success': False,
+            'message': '日期或时间格式不正确！'
+        })
+    
+    # 判断是否早睡
+    is_early = dt.hour < 24 and dt.hour >= 12
+    
+    db = get_db()
+    
+    # 检查是否已经有打卡记录
+    cur = db.execute(
+        'SELECT id FROM checkins WHERE username = ? AND check_date = ?',
+        (username, check_date)
+    )
+    existing_record = cur.fetchone()
+    
+    if existing_record:
+        # 更新现有记录
+        db.execute(
+            'UPDATE checkins SET check_time = ?, is_early = ? WHERE id = ?',
+            (check_time, is_early, existing_record['id'])
+        )
+    else:
+        # 新建打卡记录
+        db.execute(
+            'INSERT INTO checkins (username, check_date, check_time, is_early) VALUES (?, ?, ?, ?)',
+            (username, check_date, check_time, is_early)
+        )
+    
+    db.commit()
+    
+    return jsonify({
+        'success': True,
+        'message': '补卡成功！'
+    })
+
 def get_mapped_username(db, original_username):
     row = db.execute('''
         SELECT display_name FROM user_mappings 

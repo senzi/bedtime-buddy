@@ -2,7 +2,11 @@
 <html lang="zh">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <title>早睡打卡</title>
     <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.9/index.global.min.js'></script>
     <link href="/static/css/style.css" rel="stylesheet">
@@ -19,8 +23,32 @@
             </div>
         </div>
     </div>
+    <div id="makeup-modal" class="modal">
+        <div class="modal-content">
+            <h3>补卡</h3>
+            <div class="form-group">
+                <label for="makeup-username">用户名</label>
+                <input type="text" id="makeup-username" class="form-input" placeholder="请输入用户名">
+            </div>
+            <div class="form-group">
+                <label for="makeup-date">补卡日期</label>
+                <input type="date" id="makeup-date" class="form-input">
+            </div>
+            <div class="form-group">
+                <label for="makeup-time">补卡时间</label>
+                <input type="time" id="makeup-time" class="form-input">
+            </div>
+            <div class="modal-buttons">
+                <button id="makeup-submit" class="btn-primary">提交</button>
+                <button id="makeup-cancel" class="btn-secondary">取消</button>
+            </div>
+        </div>
+    </div>
     <div class="container">
-        <h1><span id="username" contenteditable="true">点击输入姓名</span>的早睡打卡</h1>
+        <div class="header-container">
+            <h1><span id="username" contenteditable="true">点击输入姓名</span>的早睡打卡</h1>
+            <button id="makeup-btn" class="btn-secondary">补卡</button>
+        </div>
         <p id="streak-info">早睡第 0 天</p>
         <div id="current-time"></div>
         <div id="calendar"></div>

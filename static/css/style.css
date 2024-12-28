@@ -61,11 +61,27 @@ h1 {
 
 .record-item {
     padding: 10px;
-    border-bottom: 1px solid #eee;
+    margin-bottom: 10px;
+    border-radius: 4px;
+    background-color: #f5f5f5;
 }
 
-.record-item:last-child {
-    border-bottom: none;
+.record-item.early {
+    border-left: 4px solid #4CAF50;
+}
+
+.record-item.late {
+    border-left: 4px solid #f44336;
+}
+
+.record-name {
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.record-time {
+    font-size: 0.9em;
+    color: #666;
 }
 
 .early {
@@ -216,7 +232,7 @@ h1 {
 }
 
 .btn-secondary {
-    background-color: #9e9e9e;
+    background-color: #757575;
     color: white;
     border: none;
     padding: 8px 16px;
@@ -224,12 +240,174 @@ h1 {
     cursor: pointer;
 }
 
+.btn-secondary:hover {
+    background-color: #616161;
+}
+
 .btn-primary:hover {
     background-color: #45a049;
 }
 
-.btn-secondary:hover {
-    background-color: #8e8e8e;
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    color: #333;
+}
+
+.form-input {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 1em;
+}
+
+.form-input:focus {
+    border-color: #4CAF50;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
+}
+
+.header-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 20px;
+    position: relative;
+    min-height: 50px; /* 确保有足够的空间 */
+}
+
+.header-container h1 {
+    margin: 0;
+    text-align: center;
+    flex-grow: 1;
+    word-break: break-word; /* 允许在必要时断词 */
+}
+
+#makeup-btn {
+    font-size: 1em;
+    position: absolute;
+    right: 0;
+    z-index: 1; /* 确保按钮在最上层 */
+}
+
+/* 移动端适配 */
+@media screen and (max-width: 768px) {
+    body {
+        padding: 10px;
+    }
+
+    .container {
+        padding: 15px;
+    }
+
+    .header-container {
+        flex-direction: column;
+        gap: 10px;
+        margin-bottom: 15px;
+        position: static; /* 移动端取消相对定位 */
+        min-height: auto;
+    }
+
+    .header-container h1 {
+        font-size: 1.5em;
+        margin-bottom: 10px;
+        width: 100%;
+    }
+
+    #makeup-btn {
+        position: static;
+        width: 100%;
+        margin-bottom: 10px;
+        order: 2; /* 确保按钮在标题后面 */
+    }
+
+    #current-time {
+        font-size: 1em;
+    }
+
+    #checkin-btn {
+        width: 100%;
+        font-size: 1.1em;
+    }
+
+    .modal-content {
+        width: 95%;
+        margin: 10px;
+        padding: 15px;
+    }
+
+    .modal-buttons {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .modal-buttons button {
+        width: 100%;
+    }
+
+    .streak-item {
+        font-size: 0.9em;
+        padding: 8px;
+    }
+
+    .record-item {
+        padding: 8px;
+        margin-bottom: 8px;
+    }
+
+    .record-name {
+        font-size: 1em;
+    }
+
+    .record-time {
+        font-size: 0.85em;
+    }
+
+    /* 移动端日历事件样式 */
+    .fc-event-content {
+        padding: 1px;
+    }
+
+    .fc-event-content div {
+        font-size: 0.8em;
+    }
+}
+
+/* 确保在更小的屏幕上也能正常显示 */
+@media screen and (max-width: 480px) {
+    .header-container h1 {
+        font-size: 1.3em;
+    }
+
+    #streak-info {
+        font-size: 1em;
+        padding: 8px;
+    }
+
+    .notification {
+        width: 90%;
+        font-size: 0.9em;
+        padding: 10px 15px;
+    }
+}
+
+/* 修复iPhone上的输入框样式 */
+input[type="date"],
+input[type="time"] {
+    -webkit-appearance: none;
+    appearance: none;
+    padding: 8px;
+    font-size: 16px; /* 防止iOS自动缩放 */
+}
+
+/* 修复移动端点击延迟 */
+* {
+    touch-action: manipulation;
 }
 
 /* 日历样式 */
@@ -250,4 +428,15 @@ h1 {
 
 .fc .fc-toolbar-title {
     font-size: 1.2em;
+}
+
+.fc-event-content {
+    padding: 2px;
+    line-height: 1.2;
+}
+
+.fc-event-content div {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }

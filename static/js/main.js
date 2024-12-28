@@ -39,11 +39,133 @@ document.addEventListener('DOMContentLoaded', function () {
         },
         eventContent: function(arg) {
             return {
-                html: `<div style="text-align: center; width: 100%;">${arg.event.title}</div>`
+                html: `
+                    <div class="fc-event-content" style="text-align: center; width: 100%;">
+                        <div>${arg.event.title}</div>
+                        <div style="font-size: 0.8em;">${arg.event.extendedProps.time}</div>
+                    </div>
+                `
             };
         }
     });
     calendar.render();
+
+    // 补卡按钮点击事件
+    document.getElementById('makeup-btn').addEventListener('click', function() {
+        const makeupModal = document.getElementById('makeup-modal');
+        const usernameInput = document.getElementById('makeup-username');
+        const dateInput = document.getElementById('makeup-date');
+        const timeInput = document.getElementById('makeup-time');
+        
+        // 设置默认值
+        usernameInput.value = localStorage.getItem('username') || '';
+        const now = new Date();
+        dateInput.value = now.toISOString().split('T')[0];
+        timeInput.value = now.toTimeString().slice(0, 5);
+        
+        makeupModal.classList.add('show');
+    });
+
+    // 补卡取消按钮
+    document.getElementById('makeup-cancel').addEventListener('click', function() {
+        document.getElementById('makeup-modal').classList.remove('show');
+    });
+
+    // 补卡提交按钮
+    document.getElementById('makeup-submit').addEventListener('click', async function() {
+        const username = document.getElementById('makeup-username').value.trim();
+        const date = document.getElementById('makeup-date').value;
+        const time = document.getElementById('makeup-time').value;
+        
+        if (!username || username === '点击输入姓名') {
+            showNotification('请输入有效的用户名！');
+            return;
+        }
+        
+        if (!date || !time) {
+            showNotification('请选择补卡日期和时间！');
+            return;
+        }
+        
+        try {
+            const response = await fetch('/makeup_checkin', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    username,
+                    date,
+                    time
+                })
+            });
+
+            const data = await response.json();
+            
+            if (data.success) {
+                showNotification(data.message);
+                document.getElementById('makeup-modal').classList.remove('show');
+                // 更新页面数据
+                updateStreak();
+                fetchAndRenderCalendar();
+                fetchAndRenderRecords();
+                updateAllStreaks();
+            } else {
+                showNotification(data.message);
+            }
+        } catch (error) {
+            console.error('补卡失败:', error);
+            showNotification('补卡失败，请重试！');
+        }
+    });
+
+    // 获取并渲染日历数据
+    async function fetchAndRenderCalendar() {
+        try {
+            const response = await fetch('/get_checkins');
+            const checkins = await response.json();
+
+            // 清除现有事件
+            calendar.removeAllEvents();
+
+            // 添加新事件
+            const events = checkins.map(checkin => ({
+                title: checkin.username,
+                extendedProps: {
+                    time: checkin.check_time,
+                    is_early: checkin.is_early
+                },
+                date: checkin.check_date,
+                backgroundColor: checkin.is_early ? '#4CAF50' : '#f44336'
+            }));
+
+            calendar.addEventSource(events);
+        } catch (error) {
+            console.error('获取打卡记录失败:', error);
+        }
+    }
+
+    // 获取并渲染打卡记录
+    async function fetchAndRenderRecords() {
+        try {
+            const response = await fetch('/get_checkins');
+            const checkins = await response.json();
+
+            const recordsHtml = checkins.map(checkin => `
+                <div class="record-item ${checkin.is_early ? 'early' : 'late'}">
+                    <div class="record-name">${checkin.username}</div>
+                    <div class="record-time">
+                        ${checkin.check_date} ${checkin.check_time}
+                        ${checkin.is_early ? '早睡打卡' : '晚睡打卡'}
+                    </div>
+                </div>
+            `).join('');
+
+            document.getElementById('checkin-records').innerHTML = recordsHtml;
+        } catch (error) {
+            console.error('获取打卡记录失败:', error);
+        }
+    }
 
     // 更新当前时间
     function updateCurrentTime() {
@@ -130,28 +252,6 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    // 获取并渲染日历数据
-    async function fetchAndRenderCalendar() {
-        try {
-            const response = await fetch('/get_checkins');
-            const checkins = await response.json();
-
-            // 清除现有事件
-            calendar.removeAllEvents();
-
-            // 添加新事件
-            const events = checkins.map(checkin => ({
-                title: `${checkin.username} ${checkin.check_time}`,
-                date: checkin.check_date,
-                backgroundColor: checkin.is_early ? '#4CAF50' : '#f44336'
-            }));
-
-            calendar.addEventSource(events);
-        } catch (error) {
-            console.error('获取打卡记录失败:', error);
-        }
-    }
-
     // 添加打卡处理函数
     async function handleCheckin(username, isConfirmed = false) {
         try {
@@ -199,25 +299,6 @@ document.addEventListener('DOMContentLoaded', function () {
         } catch (error) {
             console.error('打卡失败:', error);
             showNotification('打卡失败，请重试！');
-        }
-    }
-
-    // 获取并渲染打卡记录
-    async function fetchAndRenderRecords() {
-        try {
-            const response = await fetch('/get_checkins');
-            const checkins = await response.json();
-
-            const recordsHtml = checkins.map(checkin => `
-                <div class="record-item ${checkin.is_early ? 'early' : 'late'}">
-                    ${checkin.username} 在 ${checkin.check_date} ${checkin.check_time} 
-                    ${checkin.is_early ? '早睡打卡' : '晚睡打卡'}
-                </div>
-            `).join('');
-
-            document.getElementById('checkin-records').innerHTML = recordsHtml;
-        } catch (error) {
-            console.error('获取打卡记录失败:', error);
         }
     }
 
