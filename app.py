@@ -232,10 +232,6 @@ def calculate_streak(db, username):
     latest_checkin = daily_checkins[dates[0]]
     is_early = latest_checkin['is_early']
     
-    # 如果是晚睡，返回负数表示晚睡天数
-    if not is_early:
-        return -1
-    
     # 计算连续天数
     streak = 0
     current_date = datetime.strptime(dates[0], '%Y-%m-%d')
