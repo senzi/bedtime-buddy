@@ -55,6 +55,14 @@ def checkin():
     data = request.get_json()
     username = data.get('username')
     confirmed = data.get('confirmed', False)
+    
+    # 检查是否是"点击输入"用户名
+    if username == '点击输入姓名':
+        return jsonify({
+            'success': False,
+            'message': '请先输入用户名！'
+        })
+    
     now = datetime.now()
     
     # 修改判断逻辑：0点及以后算晚睡
@@ -142,11 +150,15 @@ def get_checkins():
     for username, display_name in mapping_rows:
         mappings[username] = display_name
 
-    # 获取所有打卡记录
+    # 获取所有打卡记录，按日期和时间排序
     checkins = db.execute('''
         SELECT username, check_date, check_time, is_early
         FROM checkins
-        ORDER BY check_date DESC, check_time DESC
+        ORDER BY check_date DESC, 
+        CASE 
+            WHEN time(check_time) >= '12:00:00' THEN time(check_time)
+            ELSE time('23:59:59')  -- 让凌晨的记录排在当天最前面
+        END DESC
     ''').fetchall()
     
     # 用于存储每个用户每天的最新记录
@@ -165,18 +177,24 @@ def get_checkins():
             latest_records[key] = {
                 'username': display_name,
                 'check_date': check_date,
-                'check_time': check_time,
+                'check_time': check_time.split(':')[0] + ':' + check_time.split(':')[1],  # 只显示时和分
                 'is_early': bool(is_early)
             }
     
-    # 将字典转换为列表并按日期和时间排序
+    # 将字典转换为列表
     result = list(latest_records.values())
-    result.sort(key=lambda x: (x['check_date'], x['check_time']), reverse=True)
     
     return jsonify(result)
 
+@app.route('/get_streak/<username>')
+def get_streak(username):
+    """获取指定用户的连续打卡天数"""
+    db = get_db()
+    streak = calculate_streak(db, username)
+    return jsonify({'streak': streak})
+
 def calculate_streak(db, username):
-    """计算指定用户的连续早睡天数"""
+    """计算指定用户的连续早睡/晚睡天数"""
     # 获取所有映射到这个显示名称的用户名
     usernames = db.execute('''
         SELECT username FROM user_mappings 
@@ -199,49 +217,46 @@ def calculate_streak(db, username):
     
     checkins = db.execute(query, usernames).fetchall()
     
-    # 用字典记录每天最新的打卡记录
-    daily_records = {}  # 格式: {date: is_early}
-    for username, check_date, check_time, is_early in checkins:
-        if check_date not in daily_records:  # 只保留每天最新的记录
-            daily_records[check_date] = bool(is_early)
+    # 按日期分组，只保留每天最后一次打卡
+    daily_checkins = {}
+    for checkin in checkins:
+        date = checkin['check_date']
+        if date not in daily_checkins:
+            daily_checkins[date] = checkin
     
-    # 将记录转换为按日期排序的列表
-    sorted_records = sorted(daily_records.items(), reverse=True)
+    dates = sorted(daily_checkins.keys(), reverse=True)
+    if not dates:
+        return 0
     
+    # 获取最近一次打卡的状态
+    latest_checkin = daily_checkins[dates[0]]
+    is_early = latest_checkin['is_early']
+    
+    # 如果是晚睡，返回负数表示晚睡天数
+    if not is_early:
+        return -1
+    
+    # 计算连续天数
     streak = 0
-    today = datetime.now().date()
+    current_date = datetime.strptime(dates[0], '%Y-%m-%d')
     
-    if not sorted_records:
-        return 0
+    for date in dates:
+        checkin_date = datetime.strptime(date, '%Y-%m-%d')
+        checkin = daily_checkins[date]
         
-    last_date = datetime.strptime(sorted_records[0][0], '%Y-%m-%d').date()
-    
-    # 如果最后一次打卡不是今天或昨天，连续天数为0
-    if (today - last_date).days > 1:
-        return 0
-        
-    # 计算连续早睡天数
-    for i, (check_date, is_early) in enumerate(sorted_records):
-        check_date = datetime.strptime(check_date, '%Y-%m-%d').date()
-        
-        # 如果不是连续的日期，跳出循环
-        if i > 0:
-            prev_date = datetime.strptime(sorted_records[i-1][0], '%Y-%m-%d').date()
-            if (prev_date - check_date).days != 1:
-                break
-                
-        if is_early:
-            streak += 1
-        else:
+        # 如果日期不连续，中断计数
+        if current_date != checkin_date:
             break
             
-    return streak
-
-@app.route('/get_streak/<username>')
-def get_streak(username):
-    db = get_db()
-    streak = calculate_streak(db, username)
-    return jsonify({'streak': streak})
+        # 如果当前打卡与连续类型不同，中断计数
+        if checkin['is_early'] != is_early:
+            break
+            
+        streak += 1
+        current_date -= timedelta(days=1)
+    
+    # 如果是晚睡，返回负数
+    return streak if is_early else -streak
 
 @app.route('/admin')
 def admin():

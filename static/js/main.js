@@ -36,6 +36,11 @@ document.addEventListener('DOMContentLoaded', function () {
             if (arg.date.getDay() === 0 || arg.date.getDay() === 6) {
                 arg.el.style.backgroundColor = '#ffebee';
             }
+        },
+        eventContent: function(arg) {
+            return {
+                html: `<div style="text-align: center; width: 100%;">${arg.event.title}</div>`
+            };
         }
     });
     calendar.render();
@@ -76,11 +81,23 @@ document.addEventListener('DOMContentLoaded', function () {
             const response = await fetch('/get_all_streaks');
             const streaks = await response.json();
 
-            const streaksHtml = streaks.map(streak => `
-            <div class="streak-item ${streak.streak > 0 ? 'active' : 'inactive'}">
-                ${streak.username} 早睡第 ${streak.streak} 天
-            </div>
-        `).join('');
+            const streaksHtml = streaks.map(streak => {
+                let statusClass, streakText;
+                if (streak.streak === 0) {
+                    statusClass = 'inactive';
+                    streakText = '尚未打卡';
+                } else {
+                    statusClass = streak.streak > 0 ? 'early' : 'late';
+                    streakText = streak.streak > 0 ? 
+                        `早睡第 ${streak.streak} 天` : 
+                        `晚睡第 ${Math.abs(streak.streak)} 天`;
+                }
+                return `
+                    <div class="streak-item ${statusClass}">
+                        ${streak.username} ${streakText}
+                    </div>
+                `;
+            }).join('');
 
             document.getElementById('all-streaks').innerHTML = streaksHtml;
         } catch (error) {
@@ -96,8 +113,18 @@ document.addEventListener('DOMContentLoaded', function () {
         try {
             const response = await fetch(`/get_streak/${username}`);
             const data = await response.json();
-            document.getElementById('streak-info').textContent =
-                `早睡第 ${data.streak} 天`;
+            const streakEl = document.getElementById('streak-info');
+            
+            if (data.streak === 0) {
+                streakEl.textContent = '尚未打卡';
+                streakEl.className = 'no-streak';
+            } else {
+                const streakText = data.streak > 0 ? 
+                    `早睡第 ${data.streak} 天` : 
+                    `晚睡第 ${Math.abs(data.streak)} 天`;
+                streakEl.textContent = streakText;
+                streakEl.className = data.streak > 0 ? 'early' : 'late';
+            }
         } catch (error) {
             console.error('获取连续打卡天数失败:', error);
         }
