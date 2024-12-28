@@ -4,6 +4,18 @@ setlocal
 :: 定义端口号
 set PORT=3967
 
+:: 创建备份目录
+set BACKUP_DIR=db_backup
+if not exist %BACKUP_DIR% mkdir %BACKUP_DIR%
+
+:: 备份数据库
+echo 正在备份数据库...
+for /f "tokens=2-4 delims=/ " %%a in ('date /t') do (
+    set TIMESTAMP=%%c%%a%%b_%TIME:~0,2%%TIME:~3,2%%TIME:~6,2%
+)
+copy bedtime.db "%BACKUP_DIR%\bedtime.db.%TIMESTAMP%.bak" >nul
+echo 数据库已备份到 %BACKUP_DIR%\bedtime.db.%TIMESTAMP%.bak
+
 :: 停止旧的进程
 echo 正在停止旧的进程...
 for /f "tokens=5" %%a in ('netstat -aon ^| find ":%PORT%" ^| find "LISTENING"') do (

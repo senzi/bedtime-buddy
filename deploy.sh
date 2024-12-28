@@ -3,6 +3,16 @@
 # 定义端口号
 PORT=3967
 
+# 创建备份目录
+BACKUP_DIR="db_backup"
+mkdir -p $BACKUP_DIR
+
+# 备份数据库
+echo "正在备份数据库..."
+TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+cp bedtime.db "$BACKUP_DIR/bedtime.db.$TIMESTAMP.bak"
+echo "数据库已备份到 $BACKUP_DIR/bedtime.db.$TIMESTAMP.bak"
+
 # 停止旧的进程
 echo "正在停止旧的进程..."
 pid=$(ps -ef | grep "gunicorn.*app:app" | grep -v grep | awk '{print $2}')
